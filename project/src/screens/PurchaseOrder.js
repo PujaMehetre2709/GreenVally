@@ -1,71 +1,43 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  ScrollView,
-  Image,
-  Alert,
-  Modal,
-  TouchableOpacity,
-  FlatList,
-  Dimensions,
-} from "react-native";
-import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { LinearGradient } from "expo-linear-gradient";
-import DateTimePickerModal from "react-native-modal-datetime-picker";
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, StyleSheet, ScrollView, Image, Alert, Modal, TouchableOpacity, FlatList, Dimensions } from 'react-native';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchProductsForOrder, savePurchaseOrder, setOrderDetails, clearOrderDetails } from '../redux/actions/purchaseOrderActions'; // Update the path if needed
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import images from '../images/images';
+import theme from '../themes/theme';
 
-const { width } = Dimensions.get("window");
-
-import Config from '../config/config';
-const BASE_URL = Config.baseurl;
-import images from '../images/images.js';
-import theme from '../themes/theme'; 
+const { width } = Dimensions.get('window');
 
 const PurchaseOrder = ({ navigation, route }) => {
-  const [customerId, setCustomerId] = useState("");
-  const [customerName, setCustomerName] = useState("");
-  const [products, setProducts] = useState([]);
-  const [quantity, setQuantity] = useState("");
-  const [orderDate, setOrderDate] = useState("");
-  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("");
-  const [specialInstructions, setSpecialInstructions] = useState("");
-  const [billingAddress, setBillingAddress] = useState("");
-  const [shippingAddress, setShippingAddress] = useState("");
-  const [Name, setAdminName] = useState("");
+  const [customerId, setCustomerId] = useState('');
+  const [customerName, setCustomerName] = useState('');
+  const [quantity, setQuantity] = useState('');
+  const [orderDate, setOrderDate] = useState('');
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [specialInstructions, setSpecialInstructions] = useState('');
+  const [billingAddress, setBillingAddress] = useState('');
+  const [shippingAddress, setShippingAddress] = useState('');
+  const [latitude, setLatitude] = useState('');
+  const [longitude, setLongitude] = useState('');
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [isOrderDatePickerVisible, setOrderDatePickerVisibility] = useState(false);
   const [isDeliveryDatePickerVisible, setDeliveryDatePickerVisibility] = useState(false);
-  const [latitude, setLatitude] = useState("");
-  const [longitude, setLongitude] = useState("");
+
+  const dispatch = useDispatch();
+  const { products, loading, error } = useSelector((state) => state.purchaseOrder);
 
   useEffect(() => {
     if (route.params && route.params.Name) {
       setAdminName(route.params.Name);
     }
-    fetchProducts();
-  }, [route.params]);
-
-  const fetchProducts = async (query = "") => {
-    try {
-      const response = await axios.get(`${BASE_URL}/products?search=${query}`);
-      setProducts(response.data);
-      await AsyncStorage.setItem('products', JSON.stringify(response.data)); // Save products to local storage
-    } catch (error) {
-      console.error(error);
-      Alert.alert("Error", "Failed to fetch products");
-      // Load products from local storage if the network request fails
-      const cachedProducts = await AsyncStorage.getItem('products');
-      if (cachedProducts) {
-        setProducts(JSON.parse(cachedProducts));
-      }
-    }
-  };
+    dispatch(fetchProductsForOrder(searchQuery));
+    return () => {
+      dispatch(clearOrderDetails());
+    };
+  }, [dispatch, route.params, searchQuery]);
 
   const handleStorePurchaseOrder = async () => {
     if (
@@ -79,69 +51,41 @@ const PurchaseOrder = ({ navigation, route }) => {
       !latitude ||
       !longitude
     ) {
-      Alert.alert("Error", "All required fields must be filled ");
+      Alert.alert('Error', 'All required fields must be filled');
       return;
     }
 
-    try {
-      const response = await axios.post(
-        `${BASE_URL}/store-purchase-order`,
-        {
-          customerId,
-          customerName,
-          products: selectedProducts,
-          quantity,
-          orderDate,
-          expectedDeliveryDate,
-          paymentMethod,
-          specialInstructions,
-          billingAddress,
-          shippingAddress,
-          location: {
-            latitude: parseFloat(latitude),
-            longitude: parseFloat(longitude),
-          },
-        }
-      );
+    const orderDetails = {
+      customerId,
+      customerName,
+      products: selectedProducts,
+      quantity,
+      orderDate,
+      expectedDeliveryDate,
+      paymentMethod,
+      specialInstructions,
+      billingAddress,
+      shippingAddress,
+      location: {
+        latitude: parseFloat(latitude),
+        longitude: parseFloat(longitude),
+      },
+    };
 
-      if (response.status === 201) {
-        Alert.alert("Success", "Purchase order stored successfully");
-        clearFields();
-      } else {
-        Alert.alert("Error", "Failed to store purchase order");
-      }
-    } catch (error) {
-      console.error(error);
-      Alert.alert("Error", "An error occurred while storing purchase order details");
-    }
-  };
-
-  const clearFields = () => {
-    setCustomerId("");
-    setCustomerName("");
-    setSelectedProducts([]);
-    setQuantity("");
-    setOrderDate("");
-    setExpectedDeliveryDate("");
-    setPaymentMethod("");
-    setSpecialInstructions("");
-    setBillingAddress("");
-    setShippingAddress("");
-    setLatitude("");
-    setLongitude("");
+    dispatch(savePurchaseOrder(orderDetails));
   };
 
   const showOrderDatePicker = () => setOrderDatePickerVisibility(true);
   const hideOrderDatePicker = () => setOrderDatePickerVisibility(false);
   const handleOrderDateConfirm = (date) => {
-    setOrderDate(date.toISOString().split("T")[0]);
+    setOrderDate(date.toISOString().split('T')[0]);
     hideOrderDatePicker();
   };
 
   const showDeliveryDatePicker = () => setDeliveryDatePickerVisibility(true);
   const hideDeliveryDatePicker = () => setDeliveryDatePickerVisibility(false);
   const handleDeliveryDateConfirm = (date) => {
-    setExpectedDeliveryDate(date.toISOString().split("T")[0]);
+    setExpectedDeliveryDate(date.toISOString().split('T')[0]);
     hideDeliveryDatePicker();
   };
 
@@ -150,10 +94,10 @@ const PurchaseOrder = ({ navigation, route }) => {
   const addProductToOrder = (product) => {
     const existingProduct = selectedProducts.find(p => p.productName === product.productName);
     if (existingProduct) {
-      existingProduct.quantity = parseInt(existingProduct.quantity || "1");
+      existingProduct.quantity = parseInt(existingProduct.quantity || '1');
       setSelectedProducts([...selectedProducts]);
     } else {
-      setSelectedProducts([...selectedProducts, { productName: product.productName, quantity: "1" }]);
+      setSelectedProducts([...selectedProducts, { productName: product.productName, quantity: '1' }]);
     }
     toggleModal();
   };
@@ -170,7 +114,7 @@ const PurchaseOrder = ({ navigation, route }) => {
 
   const handleSearchChange = (query) => {
     setSearchQuery(query);
-    fetchProducts(query);
+    dispatch(fetchProductsForOrder(query));
   };
 
   const renderSelectedProduct = ({ item }) => (
@@ -201,17 +145,10 @@ const PurchaseOrder = ({ navigation, route }) => {
   );
 
   return (
-    <LinearGradient
-      colors={theme.gradients.lightBluePurple} // Apply gradient from theme
-      style={styles.background}
-    >
+    <LinearGradient colors={theme.gradients.lightBluePurple} style={styles.background}>
       <ScrollView contentContainerStyle={styles.formContainer}>
         <View style={styles.header}>
-          <Image
-            source={images.logo} 
-            style={styles.logo}
-            resizeMode="contain"
-          />
+          <Image source={images.logo} style={styles.logo} resizeMode="contain" />
           <Text style={styles.Name}>{Name}</Text>
         </View>
         <Text style={styles.title}>Purchase Order</Text>
@@ -227,42 +164,40 @@ const PurchaseOrder = ({ navigation, route }) => {
           value={customerName}
           onChangeText={setCustomerName}
         />
-        <View style={styles.row}>
-          <TouchableOpacity onPress={toggleModal} style={styles.selectProductButton}>
-            <Text style={styles.productText}>Select Product</Text>
-          </TouchableOpacity>
-        </View>
-        <FlatList
-          data={selectedProducts}
-          renderItem={renderSelectedProduct}
-          keyExtractor={(item) => item.productName}
-        />
-        <View style={styles.dateRow}>
-          <TouchableOpacity onPress={showOrderDatePicker} style={styles.orderDateInput}>
-          <Text style={styles.dateText}>{orderDate || "Order Date"}</Text>
-          </TouchableOpacity>
-          <DateTimePickerModal
-            isVisible={isOrderDatePickerVisible}
-            mode="date"
-            onConfirm={handleOrderDateConfirm}
-            onCancel={hideOrderDatePicker}
-          />
-          <TouchableOpacity onPress={showDeliveryDatePicker} style={styles.deliveryDateInput}>
-          <Text style={styles.dateText}>{expectedDeliveryDate || "Expected Delivery Date"}</Text>
-          </TouchableOpacity>
-          <DateTimePickerModal
-            isVisible={isDeliveryDatePickerVisible}
-            mode="date"
-            onConfirm={handleDeliveryDateConfirm}
-            onCancel={hideDeliveryDatePicker}
-          />
-        </View>
         <TextInput
           style={styles.input}
           placeholder="Quantity"
           value={quantity}
           onChangeText={setQuantity}
           keyboardType="numeric"
+        />
+        <TouchableOpacity onPress={showOrderDatePicker}>
+          <TextInput
+            style={styles.input}
+            placeholder="Order Date *"
+            value={orderDate}
+            editable={false}
+          />
+        </TouchableOpacity>
+        <DateTimePickerModal
+          isVisible={isOrderDatePickerVisible}
+          mode="date"
+          onConfirm={handleOrderDateConfirm}
+          onCancel={hideOrderDatePicker}
+        />
+        <TouchableOpacity onPress={showDeliveryDatePicker}>
+          <TextInput
+            style={styles.input}
+            placeholder="Expected Delivery Date *"
+            value={expectedDeliveryDate}
+            editable={false}
+          />
+        </TouchableOpacity>
+        <DateTimePickerModal
+          isVisible={isDeliveryDatePickerVisible}
+          mode="date"
+          onConfirm={handleDeliveryDateConfirm}
+          onCancel={hideDeliveryDatePicker}
         />
         <TextInput
           style={styles.input}
@@ -293,44 +228,52 @@ const PurchaseOrder = ({ navigation, route }) => {
           placeholder="Latitude *"
           value={latitude}
           onChangeText={setLatitude}
-          keyboardType="numeric"
         />
         <TextInput
           style={styles.input}
           placeholder="Longitude *"
           value={longitude}
           onChangeText={setLongitude}
-          keyboardType="numeric"
         />
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity onPress={handleStorePurchaseOrder} style={styles.submitButton}>
-            <Text style={styles.buttonText}>Submit</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('ViewPurchaseOrders')} style={styles.viewOrdersButton}>
-            <Text style={styles.buttonText}>View Orders</Text>
-          </TouchableOpacity>
-        </View>
-        <Modal visible={modalVisible} transparent={true} animationType="slide">
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search Products"
-                value={searchQuery}
-                onChangeText={handleSearchChange}
-              />
+        <Text style={styles.title}>Selected Products</Text>
+        <FlatList
+          data={selectedProducts}
+          renderItem={renderSelectedProduct}
+          keyExtractor={(item) => item.productName}
+        />
+        <TouchableOpacity style={styles.button} onPress={toggleModal}>
+          <Text style={styles.buttonText}>Add Products</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={handleStorePurchaseOrder}>
+          <Text style={styles.buttonText}>Store Purchase Order</Text>
+        </TouchableOpacity>
+      </ScrollView>
+      <Modal visible={modalVisible} transparent={true} animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search Products"
+              value={searchQuery}
+              onChangeText={handleSearchChange}
+            />
+            {loading ? (
+              <Text>Loading...</Text>
+            ) : error ? (
+              <Text>Error fetching products</Text>
+            ) : (
               <FlatList
                 data={products}
                 renderItem={renderProductItem}
                 keyExtractor={(item) => item.productName}
               />
-              <TouchableOpacity style={styles.closeModalButton} onPress={toggleModal}>
-                <Text style={styles.buttonText}>Close</Text>
-              </TouchableOpacity>
-            </View>
+            )}
+            <TouchableOpacity style={styles.closeButton} onPress={toggleModal}>
+              <Text style={styles.buttonText}>Close</Text>
+            </TouchableOpacity>
           </View>
-        </Modal>
-      </ScrollView>
+        </View>
+      </Modal>
     </LinearGradient>
   );
 };

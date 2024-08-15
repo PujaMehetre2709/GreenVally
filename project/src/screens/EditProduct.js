@@ -1,27 +1,97 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, Dimensions } from 'react-native';
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  TouchableOpacity,
+} from "react-native";
 import { useDispatch, useSelector } from 'react-redux';
-import { updateProduct, fetchProducts } from '../redux/actions/productActions';
-import { LinearGradient } from 'expo-linear-gradient';
+import { fetchProductById, updateProduct } from '../redux/actions/productActions';
+import images from '../images/images.js';
 import theme from '../themes/theme';
-
-const { width } = Dimensions.get("window");
 
 const EditProduct = ({ route, navigation }) => {
   const { productId } = route.params;
+  const [productName, setProductName] = useState("");
+  const [description, setDescription] = useState("");
+  const [unitOfMeasurement, setUnitOfMeasurement] = useState("");
+  const [price, setPrice] = useState("");
+  const [currency, setCurrency] = useState("");
+  const [productCategory, setProductCategory] = useState("");
+  const [expiryDate, setExpiryDate] = useState("");
+  const [batchNumber, setBatchNumber] = useState("");
+  const [status, setStatus] = useState("Active");
+  const [discountAllowed, setDiscountAllowed] = useState("No");
+
   const dispatch = useDispatch();
-  const { products, loading, error } = useSelector((state) => state.product);
-
-  const [product, setProduct] = useState(null);
-
-  useEffect(() => {
-    dispatch(fetchProducts());
-  }, [dispatch]);
+  const { product, loading, error } = useSelector(state => ({
+    product: state.product.currentProduct,
+    loading: state.product.loading,
+    error: state.product.error,
+  }));
 
   useEffect(() => {
-    const productToEdit = products.find(p => p.id === productId);
-    setProduct(productToEdit);
-  }, [productId, products]);
+    if (productId) {
+      dispatch(fetchProductById(productId));
+    }
+  }, [productId, dispatch]);
+
+  useEffect(() => {
+    if (product) {
+      setProductName(product.productName);
+      setDescription(product.description);
+      setUnitOfMeasurement(product.unitOfMeasurement);
+      setPrice(product.price);
+      setCurrency(product.currency);
+      setProductCategory(product.productCategory);
+      setExpiryDate(product.expiryDate);
+      setBatchNumber(product.batchNumber);
+      setStatus(product.status);
+      setDiscountAllowed(product.discountAllowed);
+    }
+  }, [product]);
+
+  const handleUpdateProduct = useCallback(() => {
+    if (
+      !productName ||
+      !description ||
+      !unitOfMeasurement ||
+      !price ||
+      !currency ||
+      !productCategory
+    ) {
+      Alert.alert("Error", "All required fields must be filled");
+      return;
+    }
+
+    dispatch(updateProduct({
+      productId,
+      productName,
+      description,
+      unitOfMeasurement,
+      price,
+      currency,
+      productCategory,
+      expiryDate,
+      batchNumber,
+      status,
+      discountAllowed,
+    }))
+    .then(() => {
+      Alert.alert("Success", "Product updated successfully!");
+      navigation.goBack(); // Go back to the previous screen
+    })
+    .catch((error) => {
+      Alert.alert("Error", error.message || "Something went wrong");
+    });
+  }, [
+    dispatch, productId, productName, description, unitOfMeasurement,
+    price, currency, productCategory, expiryDate, batchNumber,
+    status, discountAllowed, navigation
+  ]);
 
   useEffect(() => {
     if (error) {
@@ -29,123 +99,171 @@ const EditProduct = ({ route, navigation }) => {
     }
   }, [error]);
 
-  const handleEditProduct = () => {
-    if (!product) return;
-
-    dispatch(updateProduct(productId, product));
-    Alert.alert("Success", "Product updated successfully");
-    navigation.goBack();
-  };
-
-  const handleChange = (name, value) => {
-    setProduct({
-      ...product,
-      [name]: value,
-    });
-  };
-
-  if (loading) return <Text>Loading...</Text>;
-
   return (
-    <LinearGradient
-      colors={theme.gradients.lightBluePurple}
-      style={styles.background}
-    >
-      <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.formContainer}>
+      <View style={styles.header}>
+        <Image
+          source={images.logo}
+          style={styles.logo}
+          resizeMode="contain"
+        />
         <Text style={styles.title}>Edit Product</Text>
+      </View>
+      <TextInput
+        style={styles.input}
+        placeholder="Product Name *"
+        value={productName}
+        onChangeText={setProductName}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Description *"
+        value={description}
+        onChangeText={setDescription}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Unit of Measurement *"
+        value={unitOfMeasurement}
+        onChangeText={setUnitOfMeasurement}
+      />
+      <View style={styles.row}>
         <TextInput
-          style={styles.input}
-          placeholder="Product ID"
-          value={product?.id.toString()}
-          editable={false}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Product Name"
-          value={product?.productName}
-          onChangeText={(text) => handleChange('productName', text)}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Description"
-          value={product?.description}
-          onChangeText={(text) => handleChange('description', text)}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Unit of Measurement"
-          value={product?.unitOfMeasurement}
-          onChangeText={(text) => handleChange('unitOfMeasurement', text)}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Price"
-          value={product?.price.toString()}
-          onChangeText={(text) => handleChange('price', Number(text))}
+          style={[styles.input, styles.priceInput]}
+          placeholder="Price *"
+          value={price}
+          onChangeText={setPrice}
           keyboardType="numeric"
         />
         <TextInput
-          style={styles.input}
-          placeholder="Currency"
-          value={product?.currency}
-          onChangeText={(text) => handleChange('currency', text)}
+          style={[styles.input, styles.currencyInput]}
+          placeholder="Currency *"
+          value={currency}
+          onChangeText={setCurrency}
         />
-        <TextInput
-          style={styles.input}
-          placeholder="Product Category"
-          value={product?.productCategory}
-          onChangeText={(text) => handleChange('productCategory', text)}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Batch Number"
-          value={product?.batchNumber}
-          onChangeText={(text) => handleChange('batchNumber', text)}
-        />
-        <TouchableOpacity
-          style={[styles.button, styles.saveButton]}
-          onPress={handleEditProduct}
-        >
-          <Text style={styles.buttonText}>Save</Text>
-        </TouchableOpacity>
       </View>
-    </LinearGradient>
+      <TextInput
+        style={styles.input}
+        placeholder="Product Category *"
+        value={productCategory}
+        onChangeText={setProductCategory}
+      />
+      <View style={styles.row}>
+        <TextInput
+          style={[styles.input, styles.batchNumberInput]}
+          placeholder="Batch Number"
+          value={batchNumber}
+          onChangeText={setBatchNumber}
+        />
+        <TextInput
+          style={[styles.input, styles.dateInput]}
+          placeholder="Expiry Date"
+          value={expiryDate}
+          onChangeText={setExpiryDate}
+        />
+      </View>
+      <Text style={styles.label}>Status</Text>
+      <View style={styles.pickerContainer}>
+        <Picker
+          selectedValue={status}
+          onValueChange={(itemValue) => setStatus(itemValue)}
+          style={styles.picker}
+        >
+          <Picker.Item label="Active" value="Active" />
+          <Picker.Item label="Inactive" value="Inactive" />
+        </Picker>
+      </View>
+      <Text style={styles.label}>Discount Allowed</Text>
+      <View style={styles.pickerContainer}>
+        <Picker
+          selectedValue={discountAllowed}
+          onValueChange={(itemValue) => setDiscountAllowed(itemValue)}
+          style={styles.picker}
+        >
+          <Picker.Item label="Yes" value="Yes" />
+          <Picker.Item label="No" value="No" />
+        </Picker>
+      </View>
+      <TouchableOpacity style={styles.button} onPress={handleUpdateProduct}>
+        <Text style={styles.buttonText}>Update Product</Text>
+      </TouchableOpacity>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  background: {
-    flex: 1,
-    width: "100%",
-    height: "100%",
-  },
-  container: {
+  formContainer: {
+    flexGrow: 1,
+    justifyContent: "center",
     padding: 20,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+  header: {
     marginBottom: 20,
+    paddingHorizontal: 10,
+    alignItems: "center",
+  },
+  logo: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginVertical: 10,
     color: "#4B0082",
   },
   input: {
     height: 40,
-    borderColor: '#ccc',
+    borderColor: "#ddd",
     borderWidth: 1,
+    borderRadius: 5,
+    marginBottom: 15,
+    paddingHorizontal: 10,
+    fontSize: 16,
+  },
+  priceInput: {
+    flex: 1,
+    marginRight: 5,
+  },
+  currencyInput: {
+    flex: 1,
+  },
+  batchNumberInput: {
+    flex: 2,
+  },
+  dateInput: {
+    flex: 2,
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: "bold",
     marginBottom: 10,
-    padding: 10,
-    backgroundColor: "#fff",
+    color: "#4B0082",
+  },
+  pickerContainer: {
+    borderColor: "#ddd",
+    borderWidth: 1,
+    borderRadius: 5,
+    marginBottom: 15,
+  },
+  picker: {
+    height: 40,
   },
   button: {
-    backgroundColor: '#4B0082',
-    padding: 10,
-    alignItems: 'center',
-    borderRadius: 4,
-    marginTop: 10,
+    backgroundColor: "#4B0082",
+    paddingVertical: 15,
+    borderRadius: 5,
+    alignItems: "center",
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
+    fontWeight: "bold",
   },
 });
 

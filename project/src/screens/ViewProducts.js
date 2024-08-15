@@ -70,21 +70,21 @@ const ViewProducts = ({ navigation }) => {
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.deleteButton}
-        onPress={() => handleDeletePress(item.productId)}
+        onPress={() => handleDeletePress(item.productId || 'default-id')}
       >
         <Text style={styles.deleteButtonText}>🗑</Text>
       </TouchableOpacity>
-      <Text style={styles.productId}>Product ID: {item.productId}</Text>
-      <Text style={styles.productName}>Product Name: {item.productName}</Text> 
-      <Text style={styles.productDescription}>Description: {item.description}</Text>
-      <Text style={styles.productDetails}>Unit of Measurement: {item.unitOfMeasurement}</Text>
-      <Text style={styles.productDetails}>Price: {item.price}</Text>
-      <Text style={styles.productDetails}>Currency: {item.currency}</Text>
-      <Text style={styles.productDetails}>Category: {item.productCategory}</Text>
-      <Text style={styles.productDetails}>Expiry Date: {formatDate(item.expiryDate)}</Text>
-      <Text style={styles.productDetails}>Batch Number: {item.batchNumber}</Text>
-      <Text style={styles.productDetails}>Status: {item.status}</Text>
-      <Text style={styles.productDetails}>Discount Allowed: {item.discountAllowed}</Text>
+      <Text style={styles.productId}>Product ID: {item.productId || 'N/A'}</Text>
+      <Text style={styles.productName}>Product Name: {item.productName || 'N/A'}</Text>
+      <Text style={styles.productDescription}>Description: {item.description || 'N/A'}</Text>
+      <Text style={styles.productDetails}>Unit of Measurement: {item.unitOfMeasurement || 'N/A'}</Text>
+      <Text style={styles.productDetails}>Price: {item.price || 'N/A'}</Text>
+      <Text style={styles.productDetails}>Currency: {item.currency || 'N/A'}</Text>
+      <Text style={styles.productDetails}>Category: {item.productCategory || 'N/A'}</Text>
+      <Text style={styles.productDetails}>Expiry Date: {formatDate(item.expiryDate) || 'N/A'}</Text>
+      <Text style={styles.productDetails}>Batch Number: {item.batchNumber || 'N/A'}</Text>
+      <Text style={styles.productDetails}>Status: {item.status || 'N/A'}</Text>
+      <Text style={styles.productDetails}>Discount Allowed: {item.discountAllowed || 'N/A'}</Text>
     </View>
   );
 
@@ -106,7 +106,7 @@ const ViewProducts = ({ navigation }) => {
           <FlatList
             data={products}
             renderItem={renderProductItem}
-            keyExtractor={(item) => item.productId.toString()}
+            keyExtractor={(item) => item.productId ? item.productId.toString() : 'unknown'}
           />
         ) : (
           <Text style={styles.noProducts}>No products available</Text>
