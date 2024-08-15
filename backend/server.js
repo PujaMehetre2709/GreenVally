@@ -709,27 +709,30 @@ app.get('/users', (req, res) => {
 
 app.put('/update-user/:user_id', (req, res) => {
   const { user_id } = req.params;
-  const { name,  emailid, mobile_no, role, status } = req.body;
+  const { name, emailid, mobile_no, role, status } = req.body;
 
-  // Validate required fields
   if (!name || !emailid || !mobile_no || !status) {
     return res.status(400).json({ message: 'All fields are required' });
   }
 
-  // SQL query to update user
   const query = `
     UPDATE user
-    SET name = ?,  emailid = ?, mobile_no = ?, role = ?, status = ?
+    SET name = ?, emailid = ?, mobile_no = ?, role = ?, status = ?
     WHERE user_id = ?
   `;
 
-  // Execute query
   db.query(query, [name, emailid, mobile_no, role, status, user_id], (err, results) => {
-    if (err) return res.status(500).json({ message: 'Error updating user' });
-    if (results.affectedRows === 0) return res.status(404).json({ message: 'User not found' });
+    if (err) {
+      console.error('Error updating user:', err);
+      return res.status(500).json({ message: 'Error updating user' });
+    }
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
     res.status(200).json({ message: 'User updated successfully' });
   });
 });
+
 
 // Route to delete a user
 app.delete('/delete-user/:user_id', (req, res) => {

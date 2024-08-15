@@ -39,9 +39,11 @@ const UserMaintenance = ({ navigation, route }) => {
     dispatch(fetchUsers()); // Fetch users when the component mounts
   }, [dispatch]);
 
+  
   const handleAddUser = async () => {
     try {
       await dispatch(addUser(newUser));
+      Alert.alert('Success', 'User added successfully');
       setModalVisible(false);
       setNewUser({
         name: "",
@@ -52,11 +54,13 @@ const UserMaintenance = ({ navigation, route }) => {
         role: "",
         status: "",
       });
+      dispatch(fetchUsers()); // Refresh the user list
     } catch (error) {
       console.error('Error adding user:', error);
+      Alert.alert('Error', 'Failed to add user');
     }
   };
-
+  
   const handleDeleteUser = (userId) => {
     Alert.alert(
       "Confirm Delete",

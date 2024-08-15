@@ -47,13 +47,14 @@ export const fetchUsers = () => async (dispatch) => {
   }
 };
 
-export const addUser = (newUser) => async (dispatch) => {
+export const addUser = (user) => async (dispatch) => {
   try {
-    await axios.post(`${BASE_URL}/add-users`, newUser);
-    dispatch(addUserSuccess());
-    dispatch(fetchUsers()); // Refresh users list
+     // Adjust URL accordingly
+    const response = await axios.post(`${BASE_URL}/add-users`, user);
+    dispatch({ type: 'ADD_USER_SUCCESS', payload: response.data });
   } catch (error) {
-    console.error('Error adding user:', error.response ? error.response.data : error.message);
+    console.error('Error adding user:', error);
+    throw new Error('Database error'); // Ensure this matches the error you're seeing
   }
 };
 
@@ -74,14 +75,13 @@ export const updateUserFailure = (error) => ({
   payload: error,
 });
 
-// Thunks
 export const updateUser = (userData) => async (dispatch) => {
   dispatch(updateUserRequest());
   try {
-    await axios.put(`${BASE_URL}/update-user/${userData.id}`, userData);
+    const response = await axios.put(`${BASE_URL}/update-user/${userData.user_id}`, userData);
     dispatch(updateUserSuccess());
   } catch (error) {
-    dispatch(updateUserFailure(error.message));
-    throw error; // Rethrow the error to be caught in the component
+    dispatch(updateUserFailure(error.response ? error.response.data.message : error.message));
+    throw error;
   }
 };

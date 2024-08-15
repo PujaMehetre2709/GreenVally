@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import {
   View,
@@ -9,32 +9,52 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Alert, // Added for user-friendly error messages
+  Alert,
+  Button,
 } from "react-native";
-import { updateUser } from "../redux/actions/usermaiActions"; // Ensure this path is correct
+import { updateUser } from "../redux/actions/usermaiActions";
 
 const EditUser = ({ route, navigation }) => {
   const dispatch = useDispatch();
-  const { user, onGoBack } = route.params;
+  const { user } = route.params;
   const [userData, setUserData] = useState({ ...user });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const handleUpdate = async () => {
+  const handleUpdate = () => {
+    if (!userData.user_id) {
+      Alert.alert('Error', 'User ID is missing.');
+      return;
+    }
+ 
+    console.log('Updating User:', userData);
     setLoading(true);
     setError(null);
-    try {
-      await dispatch(updateUser(userData));
-      setLoading(false);
-      if (onGoBack) onGoBack(); // Call the callback function
-      navigation.goBack();
-    } catch (error) {
-      setLoading(false);
-      setError(error.response ? error.response.data : error.message);
-      Alert.alert('Update Failed', error.response ? error.response.data : error.message);
-    }
+    dispatch(updateUser(userData))
+      .then(() => {
+        setLoading(false);
+        Alert.alert('Update Successful', 'User updated successfully.');
+        navigation.goBack();
+      })
+      .catch((error) => {
+        setLoading(false);
+        setError(error.response ? error.response.data.message : error.message);
+        Alert.alert('Update Failed', error.response ? error.response.data.message : error.message);
+      });
   };
-  
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <Button
+          onPress={handleUpdate}
+          title="Update"
+          color="#000"
+        />
+      ),
+    });
+  }, [navigation, userData]);
+
   if (loading) {
     return (
       <View style={styles.loaderContainer}>
