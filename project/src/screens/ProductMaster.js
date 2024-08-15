@@ -11,7 +11,7 @@ import {
   Dimensions,
 } from "react-native";
 import { useDispatch, useSelector } from 'react-redux';
-import { addProduct } from '../redux/actions/productActions'; // Updated import
+import { addProduct } from '../redux/actions/productActions';
 import { LinearGradient } from "expo-linear-gradient";
 import images from '../images/images.js';
 import theme from '../themes/theme';
@@ -48,6 +48,20 @@ const ProductMaster = ({ navigation, route }) => {
   }, [route.params]);
 
   const handleStoreProduct = () => {
+    console.log({
+      productId,
+      productName,
+      description,
+      unitOfMeasurement,
+      price,
+      currency,
+      productCategory,
+      expiryDate,
+      batchNumber,
+      status,
+      discountAllowed,
+    });
+  
     if (
       !productId ||
       !productName ||
@@ -60,7 +74,7 @@ const ProductMaster = ({ navigation, route }) => {
       Alert.alert("Error", "All required fields must be filled");
       return;
     }
-
+  
     dispatch(addProduct({
       productId,
       productName,
@@ -73,9 +87,15 @@ const ProductMaster = ({ navigation, route }) => {
       batchNumber,
       status,
       discountAllowed,
-    }));
+    })).then(() => {
+      Alert.alert("Success", "Product saved successfully!");
+      clearFields();
+      // Optionally, you can also navigate or refresh data here
+    }).catch((error) => {
+      Alert.alert("Error", error.message || "Something went wrong");
+    });
   };
-
+  
   useEffect(() => {
     if (error) {
       Alert.alert("Error", error);
@@ -201,12 +221,14 @@ const ProductMaster = ({ navigation, route }) => {
             <Picker.Item label="No" value="No" />
           </Picker>
         </View>
-        <TouchableOpacity style={[styles.button, styles.submitButton]} onPress={handleStoreProduct}>
-          <Text style={styles.buttonText}>Save</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, styles.viewProductsButton]} onPress={viewProducts}>
-          <Text style={styles.buttonText}>View Products</Text>
-        </TouchableOpacity>
+        <View style={styles.buttonRow}>
+          <TouchableOpacity style={[styles.button, styles.submitButton]} onPress={handleStoreProduct}>
+            <Text style={styles.buttonText}>Save</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.button, styles.viewProductsButton]} onPress={viewProducts}>
+            <Text style={styles.buttonText}>View Products</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
       <DateTimePickerModal
         isVisible={isDatePickerVisible}
@@ -291,37 +313,45 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: 16,
-    color: "#333",
+    color: "#000",
   },
   label: {
     fontSize: 16,
     fontWeight: "bold",
-    marginBottom: 10,
+    marginBottom: 5,
     color: "#4B0082",
   },
   pickerContainer: {
+    height: 40,
     borderColor: "#ddd",
     borderWidth: 1,
     borderRadius: 5,
-    overflow: "hidden",
     marginBottom: 15,
+    backgroundColor: "#fff",
   },
   picker: {
-    height: 40,
+    height: "100%",
     width: "100%",
   },
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+  },
   button: {
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
+    flex: 1,
+    paddingVertical: 10,
     borderRadius: 5,
-    marginBottom: 15,
+    alignItems: "center",
+    justifyContent: "center",
   },
   submitButton: {
     backgroundColor: "#4B0082",
+    marginRight: 10,
   },
   viewProductsButton: {
-    backgroundColor: "#6A5ACD",
+    backgroundColor: "#4B0082",
+    marginLeft: 10,
   },
   buttonText: {
     color: "#fff",

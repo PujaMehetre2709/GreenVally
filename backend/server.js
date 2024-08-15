@@ -429,10 +429,11 @@ app.get('/get-products', (req, res) => {
       console.error('Error fetching products:', err);
       return res.status(500).json({ message: 'Error fetching products' });
     }
-    console.log('Products fetched:', results); // Log results
+    console.log('Products fetched:', results); // Log results to verify
     res.json(results);
   });
 });
+
 
 // Define endpoint to delete a product
 app.delete('/delete-product/:id', (req, res) => {

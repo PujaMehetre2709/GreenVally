@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, Dimensions } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { editProduct, fetchProducts } from '../redux/actions/productActions';
+import { updateProduct, fetchProducts } from '../redux/actions/productActions';
 import { LinearGradient } from 'expo-linear-gradient';
 import theme from '../themes/theme';
 
@@ -10,7 +10,7 @@ const { width } = Dimensions.get("window");
 const EditProduct = ({ route, navigation }) => {
   const { productId } = route.params;
   const dispatch = useDispatch();
-  const { products } = useSelector((state) => state);
+  const { products, loading, error } = useSelector((state) => state.product);
 
   const [product, setProduct] = useState(null);
 
@@ -19,14 +19,20 @@ const EditProduct = ({ route, navigation }) => {
   }, [dispatch]);
 
   useEffect(() => {
-    const productToEdit = products.find(p => p.productId === productId);
+    const productToEdit = products.find(p => p.id === productId);
     setProduct(productToEdit);
   }, [productId, products]);
+
+  useEffect(() => {
+    if (error) {
+      Alert.alert("Error", error);
+    }
+  }, [error]);
 
   const handleEditProduct = () => {
     if (!product) return;
 
-    dispatch(editProduct(productId, product));
+    dispatch(updateProduct(productId, product));
     Alert.alert("Success", "Product updated successfully");
     navigation.goBack();
   };
@@ -38,7 +44,7 @@ const EditProduct = ({ route, navigation }) => {
     });
   };
 
-  if (!product) return <Text>Loading...</Text>;
+  if (loading) return <Text>Loading...</Text>;
 
   return (
     <LinearGradient
@@ -50,50 +56,50 @@ const EditProduct = ({ route, navigation }) => {
         <TextInput
           style={styles.input}
           placeholder="Product ID"
-          value={product.productId}
+          value={product?.id.toString()}
           editable={false}
         />
         <TextInput
           style={styles.input}
           placeholder="Product Name"
-          value={product.productName}
+          value={product?.productName}
           onChangeText={(text) => handleChange('productName', text)}
         />
         <TextInput
           style={styles.input}
           placeholder="Description"
-          value={product.description}
+          value={product?.description}
           onChangeText={(text) => handleChange('description', text)}
         />
         <TextInput
           style={styles.input}
           placeholder="Unit of Measurement"
-          value={product.unitOfMeasurement}
+          value={product?.unitOfMeasurement}
           onChangeText={(text) => handleChange('unitOfMeasurement', text)}
         />
         <TextInput
           style={styles.input}
           placeholder="Price"
-          value={product.price.toString()}
+          value={product?.price.toString()}
           onChangeText={(text) => handleChange('price', Number(text))}
           keyboardType="numeric"
         />
         <TextInput
           style={styles.input}
           placeholder="Currency"
-          value={product.currency}
+          value={product?.currency}
           onChangeText={(text) => handleChange('currency', text)}
         />
         <TextInput
           style={styles.input}
           placeholder="Product Category"
-          value={product.productCategory}
+          value={product?.productCategory}
           onChangeText={(text) => handleChange('productCategory', text)}
         />
         <TextInput
           style={styles.input}
           placeholder="Batch Number"
-          value={product.batchNumber}
+          value={product?.batchNumber}
           onChangeText={(text) => handleChange('batchNumber', text)}
         />
         <TouchableOpacity

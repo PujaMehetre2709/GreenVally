@@ -17,6 +17,11 @@ const store = configureStore({
     user: userLoginReducer,
     purchaseOrderReducer,
   },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      immutableCheck: false, // Disable ImmutableStateInvariantMiddleware
+      serializableCheck: false, // Optionally disable serializableCheck if needed
+    }),
 });
 
 export default store;

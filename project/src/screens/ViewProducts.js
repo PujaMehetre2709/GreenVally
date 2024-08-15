@@ -3,7 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  FlatList,
   Image,
   Alert,
   TouchableOpacity,
@@ -12,24 +12,24 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { LinearGradient } from "expo-linear-gradient";
 import NetInfo from '@react-native-community/netinfo';
-import { fetchProducts, deleteProduct } from '../redux/actions/productActions'; // Update import path if needed
+import { fetchProducts, deleteProduct } from '../redux/actions/productActions'; 
 import images from '../images/images.js';
 import theme from '../themes/theme';
 
 const ViewProducts = ({ navigation }) => {
   const dispatch = useDispatch();
-  const products = useSelector((state) => state.products.items || []); // Ensure state path matches your reducer
-  const productStatus = useSelector((state) => state.products.status); // Ensure state path matches your reducer
+  const products = useSelector((state) => state.products.products || []);
+  const productStatus = useSelector((state) => state.products.status);
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
       if (state.isConnected) {
-        dispatch(fetchProducts()); // Fetch products when network connectivity is restored
+        dispatch(fetchProducts());
       }
     });
 
     if (productStatus === 'idle' || productStatus === 'failed') {
-      dispatch(fetchProducts()); // Initial fetch or retry on failure
+      dispatch(fetchProducts());
     }
 
     return () => unsubscribe();
@@ -60,12 +60,40 @@ const ViewProducts = ({ navigation }) => {
     );
   }
 
+  const renderProductItem = ({ item }) => (
+    <View style={styles.productCard}>
+      <TouchableOpacity
+        style={styles.editButton}
+        onPress={() => navigation.navigate('EditProduct', { product: item })}
+      >
+        <Text style={styles.editButtonText}>✎</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={() => handleDeletePress(item.productId)}
+      >
+        <Text style={styles.deleteButtonText}>🗑</Text>
+      </TouchableOpacity>
+      <Text style={styles.productId}>Product ID: {item.productId}</Text>
+      <Text style={styles.productName}>Product Name: {item.productName}</Text> 
+      <Text style={styles.productDescription}>Description: {item.description}</Text>
+      <Text style={styles.productDetails}>Unit of Measurement: {item.unitOfMeasurement}</Text>
+      <Text style={styles.productDetails}>Price: {item.price}</Text>
+      <Text style={styles.productDetails}>Currency: {item.currency}</Text>
+      <Text style={styles.productDetails}>Category: {item.productCategory}</Text>
+      <Text style={styles.productDetails}>Expiry Date: {formatDate(item.expiryDate)}</Text>
+      <Text style={styles.productDetails}>Batch Number: {item.batchNumber}</Text>
+      <Text style={styles.productDetails}>Status: {item.status}</Text>
+      <Text style={styles.productDetails}>Discount Allowed: {item.discountAllowed}</Text>
+    </View>
+  );
+
   return (
     <LinearGradient
       colors={theme.gradients.lightBluePurple}
       style={styles.backgroundGradient}
     >
-      <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.container}>
         <View style={styles.header}>
           <Image
             source={images.logo}
@@ -75,43 +103,22 @@ const ViewProducts = ({ navigation }) => {
           <Text style={styles.title}>Product List</Text>
         </View>
         {products.length > 0 ? (
-          products.map((product) => (
-            <View key={product.productId} style={styles.productCard}>
-              <TouchableOpacity
-                style={styles.editButton}
-                onPress={() => navigation.navigate('EditProduct', { product })}
-              >
-                <Text style={styles.editButtonText}>✎</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.deleteButton}
-                onPress={() => handleDeletePress(product.productId)}
-              >
-                <Text style={styles.deleteButtonText}>🗑</Text>
-              </TouchableOpacity>
-              <Text style={styles.productId}>Product ID: {product.productId}</Text>
-              <Text style={styles.productName}>Product Name: {product.productName}</Text> 
-              <Text style={styles.productDescription}>Description: {product.description}</Text>
-              <Text style={styles.productDetails}>Unit of Measurement: {product.unitOfMeasurement}</Text>
-              <Text style={styles.productDetails}>Price: {product.price}</Text>
-              <Text style={styles.productDetails}>Currency: {product.currency}</Text>
-              <Text style={styles.productDetails}>Category: {product.productCategory}</Text>
-              <Text style={styles.productDetails}>Expiry Date: {formatDate(product.expiryDate)}</Text>
-              <Text style={styles.productDetails}>Batch Number: {product.batchNumber}</Text>
-              <Text style={styles.productDetails}>Status: {product.status}</Text>
-              <Text style={styles.productDetails}>Discount Allowed: {product.discountAllowed}</Text>
-            </View>
-          ))
+          <FlatList
+            data={products}
+            renderItem={renderProductItem}
+            keyExtractor={(item) => item.productId.toString()}
+          />
         ) : (
           <Text style={styles.noProducts}>No products available</Text>
         )}
+
         <TouchableOpacity
           style={styles.button}
           onPress={() => navigation.goBack()}
         >
           <Text style={styles.buttonText}>Back</Text>
         </TouchableOpacity>
-      </ScrollView>
+      </View>
     </LinearGradient>
   );
 };
@@ -124,6 +131,7 @@ const styles = StyleSheet.create({
   },
   container: {
     padding: 20,
+    flex: 1, // Ensure the container takes full height
   },
   header: {
     alignItems: "center",
@@ -133,7 +141,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     marginBottom: 10,
-    borderRadius: 50,
+    borderRadius: 25, // Make logo round
   },
   title: {
     fontSize: 24,
